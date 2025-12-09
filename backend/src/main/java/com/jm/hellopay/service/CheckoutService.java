@@ -2,6 +2,7 @@ package com.jm.hellopay.service;
 
 import com.jm.hellopay.configuration.StripeProperties;
 import com.jm.hellopay.model.dto.CheckoutRequest;
+import com.jm.hellopay.model.entity.Product;
 import com.jm.hellopay.repository.ProductRepository;
 import com.jm.hellopay.utils.F;
 import com.stripe.exception.StripeException;
@@ -26,12 +27,23 @@ public class CheckoutService {
 
         final var productResult = productRepository.findById(request.productId());
 
-        if(productResult.isEmpty())
+        if (productResult.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
 
         final var product = productResult.get();
 
-        final var priceData = SessionCreateParams.LineItem.PriceData.builder()
+        final var priceData = this.getPriceData(product);
+        final var params = getSessionCreateParams(request, priceData);
+        final var session = Session.create(params);
+
+        final var response = new HashMap<String, String>();
+        response.put("id", session.getId());
+
+        return response;
+    }
+
+    private SessionCreateParams.LineItem.PriceData getPriceData(Product product) {
+        return SessionCreateParams.LineItem.PriceData.builder()
                 .setCurrency("usd")
                 .setUnitAmount(F.toLong(product.getPrice()))
                 .setProductData(
@@ -41,8 +53,11 @@ public class CheckoutService {
                                 .setDescription(product.getDescription())
                                 .build())
                 .build();
+    }
 
-        final var params = SessionCreateParams.builder()
+    private SessionCreateParams getSessionCreateParams(CheckoutRequest request,
+                                                       SessionCreateParams.LineItem.PriceData priceData) {
+        return SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(stripeProperties.webhooks().success())
                 .setCancelUrl(stripeProperties.webhooks().cancel())
@@ -52,12 +67,6 @@ public class CheckoutService {
                                 .setPriceData(priceData)
                                 .build())
                 .build();
-
-        final var session = Session.create(params);
-
-        final var response = new HashMap<String, String>();
-        response.put("id", session.getId());
-
-        return response;
     }
+
 }
