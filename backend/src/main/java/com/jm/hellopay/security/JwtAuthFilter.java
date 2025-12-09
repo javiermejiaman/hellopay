@@ -1,6 +1,5 @@
 package com.jm.hellopay.security;
 
-import com.jm.hellopay.model.enums.JwtTokenType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,27 +29,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final var authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer")
+                || SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final var jwt = authHeader.substring(7);
         final var username = jwtService.extractUsername(jwt);
-        final var tokenType = jwtService.extractTokenType(jwt);
+        final var userDetails = customUserDetailsService.loadUserByUsername(username);
 
-        if (username != null && JwtTokenType.ACCESS.getValue().equals(tokenType)
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
-            final var userDetails = customUserDetailsService.loadUserByUsername(username);
+        if (jwtService.validateAccessToken(jwt, userDetails)) {
 
-            if (jwtService.validateToken(jwt, userDetails)) {
-                final var authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+            final var authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
