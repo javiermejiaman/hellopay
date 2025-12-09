@@ -34,6 +34,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
+	implementation("io.jsonwebtoken:jjwt:0.13.0")
+	implementation("com.stripe:stripe-java:31.0.0")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 	runtimeOnly("org.postgresql:postgresql")
