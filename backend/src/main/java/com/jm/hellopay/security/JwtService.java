@@ -13,6 +13,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.jm.hellopay.model.enums.JwtClaim.TOKEN_TYPE;
+import static com.jm.hellopay.model.enums.JwtTokenType.ACCESS;
+import static com.jm.hellopay.model.enums.JwtTokenType.REFRESH;
+
 @Service
 @RequiredArgsConstructor
 public class JwtService {
@@ -22,12 +26,14 @@ public class JwtService {
     private final JwtProperties jwtProperties;
 
     public String generateAccessToken(UserDetails userDetails) {
-        return buildToken(userDetails, Map.of(),
+        return buildToken(userDetails,
+                Map.of(TOKEN_TYPE.getValue(), ACCESS.getValue()),
                 (1000 * jwtProperties.expiration().access()));
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(userDetails, Map.of(),
+        return buildToken(userDetails,
+                Map.of(TOKEN_TYPE.getValue(), REFRESH.getValue()),
                 (1000 * jwtProperties.expiration().refresh()));
     }
 
@@ -49,6 +55,10 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public String extractTokenType(String token) {
+        return extractClaim(token, claims -> claims.get(TOKEN_TYPE.getValue()).toString());
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

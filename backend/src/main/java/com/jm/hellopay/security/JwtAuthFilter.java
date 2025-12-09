@@ -1,5 +1,6 @@
 package com.jm.hellopay.security;
 
+import com.jm.hellopay.model.enums.JwtTokenType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,8 +37,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final var jwt = authHeader.substring(7);
         final var username = jwtService.extractUsername(jwt);
+        final var tokenType = jwtService.extractTokenType(jwt);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (username != null && JwtTokenType.ACCESS.getValue().equals(tokenType)
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
             final var userDetails = customUserDetailsService.loadUserByUsername(username);
 
             if (jwtService.validateToken(jwt, userDetails)) {
