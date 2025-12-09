@@ -24,3 +24,8 @@ jwt:
   keys:
     private-key: ${JWT_PRIVATE_KEY}
     public-key: ${JWT_PUBLIC_KEY}
+stripe:
+    api-key: ${STRIPE_SECRET_KEY}
+    webhooks:
+      success: http://localhost:3000/checkout/session/success
+      cancel: http://localhost:3000/checkout/session/cancel
